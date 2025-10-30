@@ -9,58 +9,60 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    EditText etId, etName;
-    Button btnInsert, btnView, btnUpdate, btnDelete;
-    DBHelper db;
+    EditText etId, etName, etAge;
+    Button btnAdd, btnView, btnUpdate, btnDelete;
+    DatabaseHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = new DatabaseHelper(this);
+
         etId = findViewById(R.id.etId);
         etName = findViewById(R.id.etName);
-        btnInsert = findViewById(R.id.btnInsert);
+        etAge = findViewById(R.id.etAge);
+
+        btnAdd = findViewById(R.id.btnAdd);
         btnView = findViewById(R.id.btnView);
         btnUpdate = findViewById(R.id.btnUpdate);
         btnDelete = findViewById(R.id.btnDelete);
 
-        db = new DBHelper(this);
-
-        btnInsert.setOnClickListener(v -> {
-            if (db.insertData(etName.getText().toString()))
-                Toast.makeText(this, "Inserted Successfully", Toast.LENGTH_SHORT).show();
-            else
-                Toast.makeText(this, "Insert Failed", Toast.LENGTH_SHORT).show();
+        btnAdd.setOnClickListener(v -> {
+            boolean inserted = db.insertData(etName.getText().toString(), Integer.parseInt(etAge.getText().toString()));
+            showToast(inserted ? "Record Added" : "Insert Failed");
         });
 
         btnView.setOnClickListener(v -> {
-            Cursor c = db.getData();
-            if (c.getCount() == 0) {
-                Toast.makeText(this, "No Records Found", Toast.LENGTH_SHORT).show();
+            Cursor res = db.getData();
+            if (res.getCount() == 0) {
+                showToast("No Records Found");
                 return;
             }
-            StringBuilder sb = new StringBuilder();
-            while (c.moveToNext()) {
-                sb.append("ID: ").append(c.getInt(0))
-                  .append(" | Name: ").append(c.getString(1))
-                  .append("\n");
+            StringBuilder buffer = new StringBuilder();
+            while (res.moveToNext()) {
+                buffer.append("ID: ").append(res.getString(0)).append("\n");
+                buffer.append("Name: ").append(res.getString(1)).append("\n");
+                buffer.append("Age: ").append(res.getString(2)).append("\n\n");
             }
-            Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+            showToast(buffer.toString());
         });
 
         btnUpdate.setOnClickListener(v -> {
-            if (db.updateData(etId.getText().toString(), etName.getText().toString()))
-                Toast.makeText(this, "Updated Successfully", Toast.LENGTH_SHORT).show();
-            else
-                Toast.makeText(this, "Update Failed", Toast.LENGTH_SHORT).show();
+            boolean updated = db.updateData(etId.getText().toString(),
+                    etName.getText().toString(),
+                    Integer.parseInt(etAge.getText().toString()));
+            showToast(updated ? "Record Updated" : "Update Failed");
         });
 
         btnDelete.setOnClickListener(v -> {
-            if (db.deleteData(etId.getText().toString()))
-                Toast.makeText(this, "Deleted Successfully", Toast.LENGTH_SHORT).show();
-            else
-                Toast.makeText(this, "Delete Failed", Toast.LENGTH_SHORT).show();
+            int deleted = db.deleteData(etId.getText().toString());
+            showToast(deleted > 0 ? "Record Deleted" : "Delete Failed");
         });
+    }
+
+    private void showToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }
